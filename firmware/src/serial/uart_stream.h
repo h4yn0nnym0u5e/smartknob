@@ -19,6 +19,10 @@
 
 #include <driver/uart.h>
 
+#if !defined(UART_NUM)
+#define UART_NUM UART_NUM_0
+#endif // !defined(UART_NUM)
+
 /**
  * Implementation of an Arduino Stream for UART serial communications using the esp uart driver
  * directly, rather than the Arduino HAL which has a small fixed underlying rx FIFO size and
@@ -43,5 +47,5 @@ class UartStream : public Stream {
         size_t write(const uint8_t *buffer, size_t size) override;
 
     private:
-        const uart_port_t uart_port_ = UART_NUM_0;
+        const uart_port_t uart_port_ = UART_NUM;
 };
