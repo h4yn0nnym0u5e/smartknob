@@ -34,8 +34,9 @@ void SerialProtocolPlaintext::loop() {
                 protocol_change_callback_(SERIAL_PROTOCOL_PROTO);
             }
             break;
-        }
-        if (b == ' ') {
+        } else if (b == '?') {
+            stream_.println("Hello World!");
+        } else if (b == ' ') {
             if (demo_config_change_callback_) {
                 demo_config_change_callback_();
             }

@@ -33,6 +33,10 @@ void UartStream::begin() {
     conf.use_ref_tick        = false;
     assert(uart_param_config(uart_port_, &conf) == ESP_OK);
     assert(uart_driver_install(uart_port_, 32000, 32000, 0, NULL, 0) == ESP_OK);
+#if UART_NUM == UART_NUM_1
+    assert(uart_set_pin(UART_NUM, 17, 18, -1, -1) == ESP_OK);
+#endif // UART_NUM == UART_NUM_1
+
 }
 
 int UartStream::peek() {
