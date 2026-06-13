@@ -11,13 +11,14 @@ void SerialProtocolPlaintext::handleState(const PB_SmartKnobState& state) {
     latest_state_ = state;
 
     if (substantial_change) {
-        stream_.printf("STATE: %d [%d, %d]  (detent strength: %0.2f, width: %0.0f deg, endstop strength: %0.2f)\n", 
+        stream_.printf("STATE: %d [%d, %d]  (detent strength: %0.2f, width: %0.0f deg, endstop strength: %0.2f); mag status: %d\n", 
             state.current_position,
             state.config.min_position,
             state.config.max_position,
             state.config.detent_strength_unit,
             degrees(state.config.position_width_radians),
-            state.config.endstop_strength_unit);
+            state.config.endstop_strength_unit,
+            state.press_nonce);
     }
 }
 

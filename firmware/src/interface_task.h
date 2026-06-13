@@ -62,7 +62,7 @@ class InterfaceTask : public Task<InterfaceTask>, public Logger {
         SerialProtocolProtobuf proto_protocol_;
 
         void changeConfig(bool next);
-        void updateHardware();
+        void updateHardware(uint8_t press_status = 255);
         void publishState();
         void applyConfig(PB_SmartKnobConfig& config, bool from_remote);
 };

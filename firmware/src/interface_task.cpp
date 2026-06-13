@@ -177,7 +177,7 @@ static PB_SmartKnobConfig configs[] = {
         0,
         31,
         8.225806452 * PI / 180,
-        0.2,
+        0.35, // slightly stronger detents
         1,
         1.1,
         "Coarse values\nWeak detents",
@@ -341,7 +341,7 @@ void InterfaceTask::run() {
             delete log_string;
         }
 
-        updateHardware();
+        updateHardware(latest_state_.press_nonce);
 
         if (!configuration_loaded_) {
             SemaphoreGuard lock(mutex_);
@@ -379,7 +379,7 @@ void InterfaceTask::changeConfig(bool next) {
     applyConfig(configs[current_config_], false);
 }
 
-void InterfaceTask::updateHardware() {
+void InterfaceTask::updateHardware(uint8_t press_status) {
     // How far button is pressed, in range [0, 1]
     float press_value_unit = 0;
 
@@ -448,6 +448,35 @@ void InterfaceTask::updateHardware() {
         }
     #endif
 
+    #if defined(xUSE_MT6701_PUSH)
+        press_value_unit = press_status; // 0: not pressed; 1: pressed; 255: invalid
+        if (-1 < press_value_unit && press_value_unit < 2) {
+            static uint8_t press_readings;
+            if (!pressed && press_value_unit >= 0.9f) {
+                press_readings++;
+                if (press_readings > 2) {
+                    motor_task_.playHaptic(true);
+                    pressed = true;
+                    press_count_++;
+                    press_readings = 0;
+                    publishState();
+                    if (!remote_controlled_) {
+                        changeConfig(true);
+                    }
+                }
+            } else if (pressed && press_value_unit < 0.5f) {
+                press_readings++;
+                if (press_readings > 2) {
+                    motor_task_.playHaptic(false);
+                    pressed = false;
+                }
+            } else {
+                press_readings = 0;
+            }
+        }    
+    #endif // defined(USE_MT6701_PUSH)
+    
+
     uint16_t brightness = UINT16_MAX;
     // TODO: brightness scale factor should be configurable (depends on reflectivity of surface)
     #if SK_ALS
@@ -478,7 +507,6 @@ void InterfaceTask::setConfiguration(Configuration* configuration) {
 
 void InterfaceTask::publishState() {
     // Apply local state before publishing to serial
-    latest_state_.press_nonce = press_count_;
     current_protocol_->handleState(latest_state_);
 }
 

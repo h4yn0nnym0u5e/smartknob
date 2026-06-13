@@ -286,11 +286,16 @@ void MotorTask::run() {
 
         // Publish current status to other registered tasks periodically
         if (millis() - last_publish > 5) {
+            uint8_t pressed = 255; // invalid
+#if SENSOR_MT6701
+            pressed = encoder.rawStatus(); //encoder.isPushed();                        
+#endif // SENSOR_MT6701
             publish({
                 .current_position = current_position,
                 .sub_position_unit = latest_sub_position_unit,
                 .has_config = true,
                 .config = config,
+                .press_nonce = pressed
             });
             last_publish = millis();
         }

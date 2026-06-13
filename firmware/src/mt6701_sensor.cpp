@@ -36,7 +36,9 @@ static uint8_t CRC6_43_18bit (uint32_t w_InputData)
 
 #if SENSOR_MT6701
 
-MT6701Sensor::MT6701Sensor() {}
+MT6701Sensor::MT6701Sensor() 
+  : field_status{0}, push_status{0}, loss_status{0}
+  {}
 
 void MT6701Sensor::init() {
 
@@ -102,14 +104,15 @@ float MT6701Sensor::getSensorAngle() {
       uint32_t spi_32 = (spi_transaction_.rx_data[0] << 16) | (spi_transaction_.rx_data[1] << 8) | spi_transaction_.rx_data[2];
       uint32_t angle_spi = spi_32 >> 10;
 
-      uint8_t field_status = (spi_32 >> 6) & 0x3;
-      uint8_t push_status = (spi_32 >> 8) & 0x1;
-      uint8_t loss_status = (spi_32 >> 9) & 0x1;
-
       uint8_t received_crc = spi_32 & 0x3F;
       uint8_t calculated_crc = CRC6_43_18bit(spi_32 >> 6);
       
       if (received_crc == calculated_crc) {
+
+        field_status = (spi_32 >> 6) & 0x3;
+        push_status = (spi_32 >> 8) & 0x1;
+        loss_status = (spi_32 >> 9) & 0x1;
+        
         float new_angle = (float)angle_spi * 2 * PI / 16384;
         float new_x = cosf(new_angle);
         float new_y = sinf(new_angle);
