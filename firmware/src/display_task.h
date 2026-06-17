@@ -20,6 +20,8 @@ class DisplayTask : public Task<DisplayTask> {
 
         void setBrightness(uint16_t brightness);
         void setLogger(Logger* logger);
+        void setDotColour(uint8_t r, uint8_t g, uint8_t b)
+            { DOT_COLOR = spr_.color565(r,g,b); }
 
     protected:
         void run();
@@ -37,6 +39,8 @@ class DisplayTask : public Task<DisplayTask> {
         uint16_t brightness_;
         Logger* logger_;
         void log(const char* msg);
+        uint16_t DOT_COLOR;
+        float smoothing;
 };
 
 #else

@@ -62,4 +62,5 @@ class MotorTask : public Task<MotorTask> {
         void calibrate();
         void checkSensorError();
         void log(const char* msg);
+        float published_sub_position_unit;
 };

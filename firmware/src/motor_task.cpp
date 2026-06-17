@@ -51,6 +51,10 @@ void MotorTask::run() {
     SPIClass* spi = new SPIClass(HSPI);
     spi->begin(PIN_MAQ_SCK, PIN_MAQ_MISO, PIN_MAQ_MOSI, PIN_MAQ_SS);
     encoder.init(spi);
+#if defined(PIN_MAQ_MGH) && defined(PIN_MAQ_MGL)
+    pinMode(PIN_MAQ_MGH, INPUT);
+    pinMode(PIN_MAQ_MGL, INPUT);
+#endif // SENSOR_MT6701
     #endif
 
     motor.linkDriver(&driver);
@@ -290,9 +294,20 @@ void MotorTask::run() {
 #if SENSOR_MT6701
             pressed = encoder.rawStatus(); //encoder.isPushed();                        
 #endif // SENSOR_MT6701
+#if SENSOR_MAQ430 && defined(PIN_MAQ_MGH) && defined(PIN_MAQ_MGL)
+            pressed = (digitalRead(PIN_MAQ_MGH) << 1) | (digitalRead(PIN_MAQ_MGL));
+#endif // SENSOR_MAQ430
+
+            float slew = 0.25f;
+            float newValue =
+                (1.0f - slew) * published_sub_position_unit 
+                + (     slew) * latest_sub_position_unit;
+            if (fabs(newValue - published_sub_position_unit) >= 0.001f)
+              published_sub_position_unit = newValue;
+
             publish({
                 .current_position = current_position,
-                .sub_position_unit = latest_sub_position_unit,
+                .sub_position_unit = published_sub_position_unit,
                 .has_config = true,
                 .config = config,
                 .press_nonce = pressed

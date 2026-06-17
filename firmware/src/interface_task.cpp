@@ -314,9 +314,11 @@ void InterfaceTask::run() {
         switch (protocol) {
             case SERIAL_PROTOCOL_LEGACY:
                 current_protocol_ = &plaintext_protocol_;
+                display_task_->setDotColour(80, 100, 200);
                 break;
             case SERIAL_PROTOCOL_PROTO:
                 current_protocol_ = &proto_protocol_;
+                display_task_->setDotColour(200, 80, 100);
                 break;
             default:
                 log("Unknown protocol requested");

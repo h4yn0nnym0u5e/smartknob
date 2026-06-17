@@ -7,13 +7,15 @@
 
 static const uint8_t LEDC_CHANNEL_LCD_BACKLIGHT = 0;
 
-DisplayTask::DisplayTask(const uint8_t task_core) : Task{"Display", 2048, 1, task_core} {
-  knob_state_queue_ = xQueueCreate(1, sizeof(PB_SmartKnobState));
-  assert(knob_state_queue_ != NULL);
+DisplayTask::DisplayTask(const uint8_t task_core) 
+  : Task{"Display", 2048, 1, task_core}, smoothing{0.0f} 
+  {
+    knob_state_queue_ = xQueueCreate(1, sizeof(PB_SmartKnobState));
+    assert(knob_state_queue_ != NULL);
 
-  mutex_ = xSemaphoreCreateMutex();
-  assert(mutex_ != NULL);
-}
+    mutex_ = xSemaphoreCreateMutex();
+    assert(mutex_ != NULL);
+  }
 
 DisplayTask::~DisplayTask() {
   vQueueDelete(knob_state_queue_);
@@ -40,6 +42,7 @@ void DisplayTask::run() {
     ledcWrite(LEDC_CHANNEL_LCD_BACKLIGHT, (1 << SK_BACKLIGHT_BIT_DEPTH) - 1);
 
     spr_.setColorDepth(8);
+    DOT_COLOR = spr_.color565(80, 100, 200);
 
     if (spr_.createSprite(TFT_WIDTH, TFT_HEIGHT) == nullptr) {
       log("ERROR: sprite allocation failed!");
@@ -54,7 +57,7 @@ void DisplayTask::run() {
 
     const int RADIUS = TFT_WIDTH / 2;
     const uint16_t FILL_COLOR = spr_.color565(90, 18, 151);
-    const uint16_t DOT_COLOR = spr_.color565(80, 100, 200);
+//    const uint16_t DOT_COLOR = spr_.color565(80, 100, 200);
 
     spr_.setTextDatum(CC_DATUM);
     spr_.setTextColor(TFT_WHITE);
@@ -94,7 +97,22 @@ void DisplayTask::run() {
           }
 
           spr_.setFreeFont(&Roboto_Light_60);
-          spr_.drawNumber(state.current_position, TFT_WIDTH / 2, TFT_HEIGHT / 2 - VALUE_OFFSET, 1);
+          if (1 != num_positions) // have integer positions: 0 is no bounds, >1 is bounded
+            spr_.drawNumber(state.current_position, TFT_WIDTH / 2, TFT_HEIGHT / 2 - VALUE_OFFSET, 1);
+          else
+          {
+            /*
+            float slew = 0.25f;
+            float newValue =
+                (1.0f - slew) * smoothing 
+                + (     slew) * state.sub_position_unit;
+            if (fabs(newValue - smoothing) >= 0.001f)
+              smoothing = newValue;
+            /*/              
+            smoothing = state.sub_position_unit; // comes from motor task pre-smoothed
+            //*/
+            spr_.drawFloat(smoothing, 3, TFT_WIDTH / 2, TFT_HEIGHT / 2 - VALUE_OFFSET, 1);
+          }
           spr_.setFreeFont(&DESCRIPTION_FONT);
           int32_t line_y = TFT_HEIGHT / 2 + DESCRIPTION_Y_OFFSET;
           char* start = state.config.text;
