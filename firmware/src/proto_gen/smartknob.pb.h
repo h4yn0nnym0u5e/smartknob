@@ -168,17 +168,6 @@ typedef struct _PB_RequestState {
     char dummy_field;
 } PB_RequestState;
 
-/* Message TO the Smartknob from the host */
-typedef struct _PB_ToSmartknob {
-    uint8_t protocol_version;
-    uint32_t nonce;
-    pb_size_t which_payload;
-    union {
-        PB_RequestState request_state;
-        PB_SmartKnobConfig smartknob_config;
-    } payload;
-} PB_ToSmartknob;
-
 typedef struct _PB_MotorCalibration {
     bool calibrated;
     float zero_electrical_offset;
@@ -199,6 +188,22 @@ typedef struct _PB_PersistentConfiguration {
     PB_StrainCalibration strain;
 } PB_PersistentConfiguration;
 
+typedef struct _PB_RingColour {
+    int16_t led_hue;
+} PB_RingColour;
+
+/* Message TO the Smartknob from the host */
+typedef struct _PB_ToSmartknob {
+    uint8_t protocol_version;
+    uint32_t nonce;
+    pb_size_t which_payload;
+    union {
+        PB_RequestState request_state;
+        PB_SmartKnobConfig smartknob_config;
+        PB_RingColour ring_colour;
+    } payload;
+} PB_ToSmartknob;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -215,6 +220,7 @@ extern "C" {
 #define PB_PersistentConfiguration_init_default  {0, false, PB_MotorCalibration_init_default, false, PB_StrainCalibration_init_default}
 #define PB_MotorCalibration_init_default         {0, 0, 0, 0}
 #define PB_StrainCalibration_init_default        {0, 0}
+#define PB_RingColour_init_default               {0}
 #define PB_FromSmartKnob_init_zero               {0, 0, {PB_Ack_init_zero}}
 #define PB_ToSmartknob_init_zero                 {0, 0, 0, {PB_RequestState_init_zero}}
 #define PB_Ack_init_zero                         {0}
@@ -225,6 +231,7 @@ extern "C" {
 #define PB_PersistentConfiguration_init_zero     {0, false, PB_MotorCalibration_init_zero, false, PB_StrainCalibration_init_zero}
 #define PB_MotorCalibration_init_zero            {0, 0, 0, 0}
 #define PB_StrainCalibration_init_zero           {0, 0}
+#define PB_RingColour_init_zero                  {0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define PB_Ack_nonce_tag                         1
@@ -250,10 +257,6 @@ extern "C" {
 #define PB_FromSmartKnob_ack_tag                 2
 #define PB_FromSmartKnob_log_tag                 3
 #define PB_FromSmartKnob_smartknob_state_tag     4
-#define PB_ToSmartknob_protocol_version_tag      1
-#define PB_ToSmartknob_nonce_tag                 2
-#define PB_ToSmartknob_request_state_tag         3
-#define PB_ToSmartknob_smartknob_config_tag      4
 #define PB_MotorCalibration_calibrated_tag       1
 #define PB_MotorCalibration_zero_electrical_offset_tag 2
 #define PB_MotorCalibration_direction_cw_tag     3
@@ -263,6 +266,12 @@ extern "C" {
 #define PB_PersistentConfiguration_version_tag   1
 #define PB_PersistentConfiguration_motor_tag     2
 #define PB_PersistentConfiguration_strain_tag    3
+#define PB_RingColour_led_hue_tag                1
+#define PB_ToSmartknob_protocol_version_tag      1
+#define PB_ToSmartknob_nonce_tag                 2
+#define PB_ToSmartknob_request_state_tag         3
+#define PB_ToSmartknob_smartknob_config_tag      4
+#define PB_ToSmartknob_ring_colour_tag           5
 
 /* Struct field encoding specification for nanopb */
 #define PB_FromSmartKnob_FIELDLIST(X, a) \
@@ -280,11 +289,13 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,smartknob_state,payload.smartknob_st
 X(a, STATIC,   SINGULAR, UINT32,   protocol_version,   1) \
 X(a, STATIC,   SINGULAR, UINT32,   nonce,             2) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,request_state,payload.request_state),   3) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,smartknob_config,payload.smartknob_config),   4)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,smartknob_config,payload.smartknob_config),   4) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,ring_colour,payload.ring_colour),   5)
 #define PB_ToSmartknob_CALLBACK NULL
 #define PB_ToSmartknob_DEFAULT NULL
 #define PB_ToSmartknob_payload_request_state_MSGTYPE PB_RequestState
 #define PB_ToSmartknob_payload_smartknob_config_MSGTYPE PB_SmartKnobConfig
+#define PB_ToSmartknob_payload_ring_colour_MSGTYPE PB_RingColour
 
 #define PB_Ack_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UINT32,   nonce,             1)
@@ -350,6 +361,11 @@ X(a, STATIC,   SINGULAR, INT32,    press_delta,       2)
 #define PB_StrainCalibration_CALLBACK NULL
 #define PB_StrainCalibration_DEFAULT NULL
 
+#define PB_RingColour_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, INT32,    led_hue,           1)
+#define PB_RingColour_CALLBACK NULL
+#define PB_RingColour_DEFAULT NULL
+
 extern const pb_msgdesc_t PB_FromSmartKnob_msg;
 extern const pb_msgdesc_t PB_ToSmartknob_msg;
 extern const pb_msgdesc_t PB_Ack_msg;
@@ -360,6 +376,7 @@ extern const pb_msgdesc_t PB_RequestState_msg;
 extern const pb_msgdesc_t PB_PersistentConfiguration_msg;
 extern const pb_msgdesc_t PB_MotorCalibration_msg;
 extern const pb_msgdesc_t PB_StrainCalibration_msg;
+extern const pb_msgdesc_t PB_RingColour_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define PB_FromSmartKnob_fields &PB_FromSmartKnob_msg
@@ -372,6 +389,7 @@ extern const pb_msgdesc_t PB_StrainCalibration_msg;
 #define PB_PersistentConfiguration_fields &PB_PersistentConfiguration_msg
 #define PB_MotorCalibration_fields &PB_MotorCalibration_msg
 #define PB_StrainCalibration_fields &PB_StrainCalibration_msg
+#define PB_RingColour_fields &PB_RingColour_msg
 
 /* Maximum encoded size of messages (where known) */
 #define PB_Ack_size                              6
@@ -380,6 +398,7 @@ extern const pb_msgdesc_t PB_StrainCalibration_msg;
 #define PB_MotorCalibration_size                 15
 #define PB_PersistentConfiguration_size          47
 #define PB_RequestState_size                     0
+#define PB_RingColour_size                       11
 #define PB_SMARTKNOB_PB_H_MAX_SIZE               PB_FromSmartKnob_size
 #define PB_SmartKnobConfig_size                  184
 #define PB_SmartKnobState_size                   206

@@ -26,6 +26,7 @@ message FromSmartKnob {
     oneof payload {
         RequestState request_state = 3;
         SmartKnobConfig smartknob_config = 4;
+        RingColour ring_colour = 5;
     }
 }
 
@@ -218,4 +219,8 @@ message MotorCalibration {
 message StrainCalibration {
     int32 idle_value = 1;
     int32 press_delta = 2; 
+}
+
+message RingColour {
+    int32 led_hue = 1 [(nanopb).int_size = IS_16];
 }
